@@ -1,0 +1,136 @@
+import { MapMock } from '../components/map/MapMock';
+import { BottomSheet } from '../components/ui/BottomSheet';
+import { Button } from '../components/ui/Button';
+import { Phone, AlertCircle, MapPin, Search, PhoneCall, Share2, CheckCircle2, Home as HomeIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { motion, AnimatePresence } from 'motion/react';
+
+export function NavigationScreen() {
+  const navigate = useNavigate();
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [arrivedOpen, setArrivedOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(24); // mins
+
+  // Mock progress
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex flex-col h-full bg-slate-800 relative overflow-hidden">
+      {/* Top Banner */}
+      <motion.div 
+        initial={{ y: -50 }}
+        animate={{ y: 0 }}
+        className="absolute top-0 inset-x-0 z-30 pt-8 mt-4 px-4 pointer-events-none"
+      >
+        <div className="bg-emerald-500/20 backdrop-blur-md text-emerald-300 font-bold px-6 py-3.5 rounded-full shadow-lg border border-emerald-400/30 flex items-center justify-center gap-3 max-w-[200px] mx-auto pointer-events-auto">
+          <span className="text-xl">🦉</span>
+          부엉이 동행 중
+        </div>
+      </motion.div>
+
+      <div className="flex-1 w-full h-full relative">
+        {/* Mock Map with active user dot */}
+        <MapMock showRoute active routeType="safe" pois={[
+          { type: 'cctv', x: 40, y: 65 },
+          { type: 'bell', x: 45, y: 60 }
+        ]} />
+      </div>
+
+      {/* Floating Emergency Button */}
+      <div className="absolute right-5 bottom-[160px] z-20">
+        <button 
+          onClick={() => setEmergencyOpen(true)}
+          className="w-16 h-16 bg-red-500 rounded-full shadow-[0_8px_30px_rgba(239,68,68,0.3)] flex items-center justify-center text-white active:scale-95 transition-transform"
+        >
+          <AlertCircle className="w-8 h-8" />
+        </button>
+      </div>
+
+      {/* Bottom Status Bar */}
+      <div className="absolute bottom-0 inset-x-0 bg-slate-700 rounded-t-[32px] p-6 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.2)] border-t border-slate-600 z-20">
+        <div className="flex justify-between items-end mb-6">
+          <div>
+            <p className="text-slate-300 text-sm mb-1 font-medium">강남역 2번 출구로 가는 중</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold text-slate-50">{timeLeft}<span className="text-2xl text-slate-400">분</span></span>
+              <span className="text-slate-300 text-lg font-medium">남음 (1.0km)</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="outline" className="h-14 rounded-[20px] px-6" onClick={() => navigate('/share')}>
+            <Share2 className="w-5 h-5" />
+          </Button>
+          <Button className="flex-1 h-14 rounded-[20px] bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold" onClick={() => setArrivedOpen(true)}>
+            <HomeIcon className="w-5 h-5 mr-2" />
+            귀가 완료
+          </Button>
+        </div>
+      </div>
+
+      {/* Arrival Bottom Sheet */}
+      <BottomSheet isOpen={arrivedOpen} onClose={() => setArrivedOpen(false)} hideClose>
+        <div className="flex flex-col items-center text-center pb-4 pt-4">
+          <div className="w-24 h-24 bg-slate-700 border border-slate-600 rounded-full flex items-center justify-center mb-6 shadow-lg relative">
+            <span className="text-5xl">🦉</span>
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center border-[3px] border-slate-800">
+              <CheckCircle2 className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-50 mb-2">안전하게 도착하셨군요!</h2>
+          <p className="text-slate-300 mb-8 leading-relaxed">
+            부엉이가 보호자(아빠)에게<br />귀가 완료 알림 메시지를 전송했습니다.
+          </p>
+          <Button size="lg" fullWidth className="h-16 rounded-[24px]" onClick={() => navigate('/home', { state: { showAdPopup: true } })}>
+            홈으로 돌아가기
+          </Button>
+        </div>
+      </BottomSheet>
+
+      {/* Emergency Bottom Sheet */}
+      <BottomSheet isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} title="긴급 도움">
+        <div className="flex flex-col gap-4 pb-2">
+          <button className="w-full bg-red-500 hover:bg-red-400 text-white rounded-[24px] p-6 flex items-center gap-5 transition-colors shadow-sm active:scale-[0.98]">
+            <div className="bg-white/20 p-4 rounded-full">
+              <PhoneCall className="w-8 h-8" />
+            </div>
+            <div className="text-left">
+              <div className="text-2xl font-bold">112 전화</div>
+              <div className="text-red-100 font-medium mt-1">경찰에 즉시 연결됩니다</div>
+            </div>
+          </button>
+
+          <button className="w-full bg-slate-600 hover:bg-slate-500 text-slate-50 border border-slate-500 rounded-[24px] p-5 flex items-center gap-4 transition-colors active:scale-[0.98]">
+            <div className="bg-slate-700 p-3 rounded-full border border-slate-600 shadow-sm">
+              <Phone className="w-6 h-6 text-slate-200" />
+            </div>
+            <div className="text-left flex-1">
+              <div className="text-lg font-bold">보호자에게 연락</div>
+              <div className="text-slate-300 text-sm mt-1 font-medium">아빠</div>
+            </div>
+          </button>
+
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            {[
+              { icon: <AlertCircle className="w-6 h-6 text-red-400" />, label: '비상벨' },
+              { icon: <Search className="w-6 h-6 text-blue-400" />, label: '편의점' },
+              { icon: <MapPin className="w-6 h-6 text-blue-400" />, label: '파출소' }
+            ].map((poi, i) => (
+              <button key={i} className="bg-slate-700 border border-slate-600 p-4 rounded-[20px] flex flex-col items-center gap-2 hover:bg-slate-600 transition-colors shadow-sm active:scale-95">
+                <div className="p-2 bg-slate-600 rounded-full">{poi.icon}</div>
+                <span className="text-slate-200 text-sm font-medium">{poi.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </BottomSheet>
+    </div>
+  );
+}
