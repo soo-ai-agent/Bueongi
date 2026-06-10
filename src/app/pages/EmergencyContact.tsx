@@ -26,6 +26,13 @@ export function EmergencyContact() {
       toast.error('이름과 전화번호를 모두 입력해 주세요.');
       return;
     }
+    // 위급 시 실제 발신 가능한 번호인지 검증. 숫자 외 입력(이름 오기재 등)이 등록되면
+    // 긴급 도움 시트의 tel: 링크가 빈 번호가 되어 전화가 걸리지 않는다.
+    const digits = trimmedPhone.replace(/[^0-9]/g, '');
+    if (digits.length < 9 || digits.length > 11) {
+      toast.error('올바른 전화번호를 입력해 주세요. (예: 010-1234-5678)');
+      return;
+    }
     const ok = addContact(trimmedName, trimmedPhone);
     if (!ok) {
       toast.error(`긴급 연락처는 최대 ${MAX_CONTACTS}명까지 등록할 수 있어요.`);
