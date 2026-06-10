@@ -4,6 +4,7 @@ import {
   shareOrCopyText,
   buildEmergencyShareText,
   buildReturnShareText,
+  buildArrivalShareText,
 } from './share';
 
 describe('isUserCancelledShare', () => {
@@ -98,5 +99,19 @@ describe('buildReturnShareText', () => {
   it('목적지가 비면 빈 라벨 없이 기본 라벨로 폴백', () => {
     expect(buildReturnShareText('')).toContain('목적지(으)로 이동 중');
     expect(buildReturnShareText('   ')).toContain('목적지(으)로 이동 중');
+  });
+});
+
+describe('buildArrivalShareText', () => {
+  it('귀가 완료 식별 문구 + 목적지를 포함한다(보호자가 도착지를 알 수 있도록)', () => {
+    const msg = buildArrivalShareText('강남역 2번 출구');
+    expect(msg).toContain('강남역 2번 출구');
+    expect(msg).toContain('부엉이 안심귀가');
+    expect(msg).toContain('안전하게 도착');
+  });
+
+  it('목적지가 비면 빈 라벨 없이 기본 라벨로 폴백(깨진/거짓 위치 방지)', () => {
+    expect(buildArrivalShareText('')).toBe('[부엉이 안심귀가] 목적지에 안전하게 도착했습니다.');
+    expect(buildArrivalShareText('   ')).toBe('[부엉이 안심귀가] 목적지에 안전하게 도착했습니다.');
   });
 });

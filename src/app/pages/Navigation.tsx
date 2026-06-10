@@ -7,9 +7,9 @@ import { useLocation, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useApp } from '../store/appStore';
-import { shareOrCopyText, buildEmergencyShareText } from '../utils/share';
+import { shareOrCopyText, buildEmergencyShareText, buildArrivalShareText } from '../utils/share';
 import { mockRoutes } from './RouteComparison';
-import { resolveRoute, parseEtaMinutes } from '../utils/routeSelection';
+import { resolveRoute, parseEtaMinutes, getRouteDestinationContext } from '../utils/routeSelection';
 
 const sanitizePhone = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
@@ -17,7 +17,8 @@ export function NavigationScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const { destination, primaryContact } = useApp();
-  const destName = destination?.name ?? '목적지';
+  // 목적지 컨텍스트 — RouteDetail/RouteComparison/ConfirmLocation 가드와 동일 기준(단일 헬퍼).
+  const { hasDestination, destinationName } = getRouteDestinationContext(destination);
   // RouteDetail에서 선택한 경로를 길안내로 이어받는다(없으면 추천 경로로 폴백).
   const route = resolveRoute(mockRoutes, location.state?.routeId) ?? mockRoutes[0];
   const [emergencyOpen, setEmergencyOpen] = useState(false);
@@ -34,7 +35,7 @@ export function NavigationScreen() {
 
   // 귀가 완료를 보호자에게 실제로 알린다(자동 전송 메커니즘 부재 → 공유/복사로 정직 처리).
   const handleNotifyArrival = async () => {
-    const text = `[부엉이 안심귀가] ${destName}에 안전하게 도착했습니다.`;
+    const text = buildArrivalShareText(destinationName);
     const outcome = await shareOrCopyText({
       title: '부엉이 안심귀가',
       text,
@@ -58,7 +59,7 @@ export function NavigationScreen() {
   const handleEmergencyShare = async () => {
     const outcome = await shareOrCopyText({
       title: '부엉이 긴급',
-      text: buildEmergencyShareText(destName),
+      text: buildEmergencyShareText(destinationName),
       url: `${window.location.origin}/share`,
     });
     if (outcome === 'shared') {
@@ -72,6 +73,24 @@ export function NavigationScreen() {
     }
     // 'cancelled'는 무안내
   };
+
+  // 목적지가 없으면(직접 진입·새로고침·state 소실) 가짜 "목적지로 가는 중" 길안내를 띄우거나
+  // 보호자에게 "목적지에 안전하게 도착"/긴급 메시지를 의미 없는 플레이스홀더 위치로 보내지 않는다.
+  // 검색으로 유도한다(RouteDetail/RouteComparison/ConfirmLocation 가드와 동일 — 단일 기준).
+  if (!hasDestination) {
+    return (
+      <div className="flex flex-col h-full bg-slate-800 items-center justify-center text-center px-8 gap-4">
+        <div className="w-14 h-14 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-slate-400">
+          <MapPin className="w-6 h-6" />
+        </div>
+        <p className="text-slate-300 font-medium">선택된 목적지가 없어요</p>
+        <p className="text-slate-400 text-sm">목적지를 검색하면 안심 경로로 동행해 드려요.</p>
+        <Button onClick={() => navigate('/place-search')} className="rounded-[20px]">
+          목적지 검색하기
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-slate-800 relative overflow-hidden">
@@ -109,7 +128,7 @@ export function NavigationScreen() {
       <div className="absolute bottom-0 inset-x-0 bg-slate-700 rounded-t-[32px] p-6 pb-8 shadow-[0_-8px_30px_rgba(0,0,0,0.2)] border-t border-slate-600 z-20">
         <div className="flex justify-between items-end mb-6">
           <div>
-            <p className="text-slate-300 text-sm mb-1 font-medium">{destName}로 가는 중 · {route.name}</p>
+            <p className="text-slate-300 text-sm mb-1 font-medium">{destinationName}로 가는 중 · {route.name}</p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold text-slate-50">{timeLeft}<span className="text-2xl text-slate-400">분</span></span>
               <span className="text-slate-300 text-lg font-medium">남음 ({route.dist})</span>

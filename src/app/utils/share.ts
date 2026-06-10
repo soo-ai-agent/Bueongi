@@ -68,3 +68,14 @@ export function buildReturnShareText(destName: string): string {
   const where = destName.trim() || '목적지';
   return `[부엉이 안심귀가] ${where}(으)로 이동 중입니다. 실시간 위치를 확인해 주세요.`;
 }
+
+/**
+ * 귀가 완료를 보호자에게 알릴 메시지 본문을 만든다.
+ * 목적지를 포함해 수신자가 어디에 도착했는지 알 수 있게 한다(빈 목적지는 안전 기본 라벨로 폴백).
+ * (기존엔 NavigationScreen 인라인 문자열이라 미테스트였고, 목적지 미선택 시 "목적지에 도착"이라는
+ *  의미 없는 위치를 보호자에게 보낼 수 있었다 — 호출부 가드 + 이 util로 회귀 방어.)
+ */
+export function buildArrivalShareText(destName: string): string {
+  const where = destName.trim() || '목적지';
+  return `[부엉이 안심귀가] ${where}에 안전하게 도착했습니다.`;
+}
