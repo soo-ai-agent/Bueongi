@@ -15,3 +15,38 @@ export function isUserCancelledShare(err: unknown): boolean {
     (err as { name?: unknown }).name === 'AbortError'
   );
 }
+
+export type ShareOutcome = 'shared' | 'cancelled' | 'copied' | 'failed';
+
+/**
+ * 메시지를 Web Share API로 공유하고, 미지원/실제 오류 시 클립보드 복사로 폴백한다.
+ * 결과를 정직하게 반환해 호출부가 거짓 확신("전송했습니다") 없이 실제 처리 결과를 안내할 수 있게 한다.
+ *  - 'shared'    : 공유 시트로 실제 전달됨
+ *  - 'cancelled' : 사용자가 공유를 취소(정상) → 폴백하지 않음
+ *  - 'copied'    : 공유 불가/실패로 클립보드에 복사됨(사용자가 직접 전달 필요)
+ *  - 'failed'    : 공유·복사 모두 실패
+ */
+export async function shareOrCopyText(opts: {
+  title: string;
+  text: string;
+  url?: string;
+}): Promise<ShareOutcome> {
+  const fullText = opts.url ? `${opts.text}\n${opts.url}` : opts.text;
+
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    try {
+      await navigator.share({ title: opts.title, text: opts.text, url: opts.url });
+      return 'shared';
+    } catch (err) {
+      if (isUserCancelledShare(err)) return 'cancelled';
+      // 실제 오류는 아래 클립보드 폴백으로 이어진다(raw 에러는 노출하지 않음).
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(fullText);
+    return 'copied';
+  } catch {
+    return 'failed';
+  }
+}

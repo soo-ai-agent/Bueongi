@@ -5,7 +5,9 @@ import { Phone, AlertCircle, MapPin, Search, PhoneCall, Share2, CheckCircle2, Ho
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 import { useApp } from '../store/appStore';
+import { shareOrCopyText } from '../utils/share';
 
 const sanitizePhone = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
@@ -24,6 +26,28 @@ export function NavigationScreen() {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // 귀가 완료를 보호자에게 실제로 알린다(자동 전송 메커니즘 부재 → 공유/복사로 정직 처리).
+  const handleNotifyArrival = async () => {
+    const text = `[부엉이 안심귀가] ${destName}에 안전하게 도착했습니다.`;
+    const outcome = await shareOrCopyText({
+      title: '부엉이 안심귀가',
+      text,
+      url: `${window.location.origin}/share`,
+    });
+    if (outcome === 'shared') {
+      toast('보호자에게 귀가 완료를 알렸어요.', {
+        icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
+      });
+    } else if (outcome === 'copied') {
+      toast('귀가 완료 메시지를 복사했어요. 보호자에게 보내 주세요.', {
+        icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
+      });
+    } else if (outcome === 'failed') {
+      toast.error('알림 전송에 실패했어요. 다시 시도해 주세요.');
+    }
+    // 'cancelled'(사용자 취소)는 정상 흐름 → 안내 없음
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-800 relative overflow-hidden">
@@ -90,12 +114,31 @@ export function NavigationScreen() {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-slate-50 mb-2">안전하게 도착하셨군요!</h2>
-          <p className="text-slate-300 mb-8 leading-relaxed">
-            부엉이가 보호자{primaryContact ? `(${primaryContact.name})` : ''}에게<br />귀가 완료 알림 메시지를 전송했습니다.
-          </p>
-          <Button size="lg" fullWidth className="h-16 rounded-[24px]" onClick={() => navigate('/home', { state: { showAdPopup: true } })}>
-            홈으로 돌아가기
-          </Button>
+          {primaryContact ? (
+            <p className="text-slate-300 mb-8 leading-relaxed">
+              {primaryContact.name} 보호자에게<br />귀가 완료 소식을 알려 보세요.
+            </p>
+          ) : (
+            <p className="text-slate-300 mb-8 leading-relaxed">
+              긴급 연락처(보호자)가 등록되어 있지 않아요.<br />등록하면 귀가 완료를 빠르게 알릴 수 있어요.
+            </p>
+          )}
+          <div className="flex flex-col gap-3 w-full">
+            {primaryContact ? (
+              <Button size="lg" fullWidth className="h-16 rounded-[24px]" onClick={handleNotifyArrival}>
+                <Share2 className="w-5 h-5 mr-2" />
+                보호자에게 귀가 알리기
+              </Button>
+            ) : (
+              <Button size="lg" fullWidth className="h-16 rounded-[24px]" onClick={() => navigate('/emergency-contacts')}>
+                <Phone className="w-5 h-5 mr-2" />
+                보호자 등록하기
+              </Button>
+            )}
+            <Button variant="secondary" fullWidth className="h-14 rounded-[24px] bg-slate-600 text-slate-200 hover:bg-slate-500" onClick={() => navigate('/home', { state: { showAdPopup: true } })}>
+              홈으로 돌아가기
+            </Button>
+          </div>
         </div>
       </BottomSheet>
 

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { isUserCancelledShare } from './share';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { isUserCancelledShare, shareOrCopyText } from './share';
 
 describe('isUserCancelledShare', () => {
   it('사용자 취소(AbortError)는 true → 호출부 조용히 종료', () => {
@@ -19,5 +19,52 @@ describe('isUserCancelledShare', () => {
     expect(isUserCancelledShare(undefined)).toBe(false);
     expect(isUserCancelledShare('AbortError')).toBe(false);
     expect(isUserCancelledShare({})).toBe(false);
+  });
+});
+
+describe('shareOrCopyText', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('Web Share 성공 → shared (클립보드 미사용)', async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn();
+    vi.stubGlobal('navigator', { share, clipboard: { writeText } });
+    const r = await shareOrCopyText({ title: 't', text: 'msg', url: 'u' });
+    expect(r).toBe('shared');
+    expect(share).toHaveBeenCalledWith({ title: 't', text: 'msg', url: 'u' });
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it('사용자 취소(AbortError) → cancelled (폴백 복사 안 함, 거짓 성공 방지)', async () => {
+    const share = vi.fn().mockRejectedValue(new DOMException('x', 'AbortError'));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { share, clipboard: { writeText } });
+    const r = await shareOrCopyText({ title: 't', text: 'msg' });
+    expect(r).toBe('cancelled');
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it('실제 오류 → 클립보드 폴백 copied (보호자 전달 경로 보장)', async () => {
+    const share = vi.fn().mockRejectedValue(new DOMException('x', 'NotAllowedError'));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { share, clipboard: { writeText } });
+    const r = await shareOrCopyText({ title: 't', text: 'msg', url: 'u' });
+    expect(r).toBe('copied');
+    expect(writeText).toHaveBeenCalledWith('msg\nu');
+  });
+
+  it('Web Share 미지원 → 클립보드 copied', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const r = await shareOrCopyText({ title: 't', text: 'msg' });
+    expect(r).toBe('copied');
+    expect(writeText).toHaveBeenCalledWith('msg');
+  });
+
+  it('공유·복사 모두 실패 → failed', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('no clipboard'));
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const r = await shareOrCopyText({ title: 't', text: 'msg' });
+    expect(r).toBe('failed');
   });
 });
