@@ -2,7 +2,8 @@ import { ShieldCheck, MapPin, BellRing, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { hasSeenOnboarding, markOnboardingSeen } from '../utils/onboarding';
 
 const slides = [
   {
@@ -26,16 +27,32 @@ export function Onboarding() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
 
+  // 이미 온보딩을 본(또는 건너뛴) 사용자는 콜드스타트 시 홈으로 바로 진입(위급 시 접근 지연 방지)
+  useEffect(() => {
+    if (hasSeenOnboarding()) navigate('/home', { replace: true });
+  }, [navigate]);
+
+  const completeOnboarding = () => {
+    markOnboardingSeen();
+    navigate('/home');
+  };
+
   const handleNext = () => {
     if (step < slides.length - 1) {
       setStep(step + 1);
     } else {
-      navigate('/home');
+      completeOnboarding();
     }
   };
 
   return (
     <div className="flex-1 flex flex-col pt-24 pb-10 px-6 relative bg-slate-800">
+      <button
+        onClick={completeOnboarding}
+        className="absolute top-8 right-6 z-10 text-slate-400 text-sm font-medium px-2 py-1 rounded-lg hover:text-slate-200 transition-colors"
+      >
+        건너뛰기
+      </button>
       <div className="flex-1 flex flex-col items-center text-center mt-12">
         <motion.div
           key={step}
