@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { isUserCancelledShare, shareOrCopyText, buildEmergencyShareText } from './share';
+import {
+  isUserCancelledShare,
+  shareOrCopyText,
+  buildEmergencyShareText,
+  buildReturnShareText,
+} from './share';
 
 describe('isUserCancelledShare', () => {
   it('사용자 취소(AbortError)는 true → 호출부 조용히 종료', () => {
@@ -80,5 +85,18 @@ describe('buildEmergencyShareText', () => {
   it('목적지가 비어도 빈 라벨 없이 안전한 기본 문구를 보장', () => {
     expect(buildEmergencyShareText('')).toContain('목적지 미상');
     expect(buildEmergencyShareText('   ')).toContain('목적지 미상');
+  });
+});
+
+describe('buildReturnShareText', () => {
+  it('목적지와 안심귀가 식별 문구를 포함한다', () => {
+    const msg = buildReturnShareText('강남역 2번 출구');
+    expect(msg).toContain('강남역 2번 출구');
+    expect(msg).toContain('부엉이 안심귀가');
+  });
+
+  it('목적지가 비면 빈 라벨 없이 기본 라벨로 폴백', () => {
+    expect(buildReturnShareText('')).toContain('목적지(으)로 이동 중');
+    expect(buildReturnShareText('   ')).toContain('목적지(으)로 이동 중');
   });
 });

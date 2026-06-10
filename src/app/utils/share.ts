@@ -59,3 +59,12 @@ export function buildEmergencyShareText(destName: string): string {
   const where = destName.trim() || '목적지 미상';
   return `[부엉이 긴급] 도움이 필요합니다. 목적지: ${where}`;
 }
+
+/**
+ * 안심귀가 진행 상태를 보호자에게 공유할 메시지 본문을 만든다.
+ * 목적지를 포함해 수신자가 행선지를 알 수 있게 한다(빈 목적지는 안전 기본 라벨로 폴백).
+ */
+export function buildReturnShareText(destName: string): string {
+  const where = destName.trim() || '목적지';
+  return `[부엉이 안심귀가] ${where}(으)로 이동 중입니다. 실시간 위치를 확인해 주세요.`;
+}

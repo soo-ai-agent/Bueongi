@@ -1,8 +1,8 @@
-import { ArrowLeft, CheckCircle2, Copy, Send } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, Send, Share2, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useApp } from '../store/appStore';
-import { isUserCancelledShare } from '../utils/share';
+import { isUserCancelledShare, buildReturnShareText } from '../utils/share';
 
 export function ShareStatus() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export function ShareStatus() {
   const destName = destination?.name ?? '목적지';
 
   // 공유 메시지 (보호자에게 전달될 안심귀가 상태)
-  const shareMessage = `[부엉이 안심귀가] ${destName}(으)로 이동 중입니다. 실시간 위치를 확인해 주세요.`;
+  const shareMessage = buildReturnShareText(destName);
   const shareUrl = `${window.location.origin}/share`;
   const shareText = `${shareMessage}\n${shareUrl}`;
 
@@ -61,12 +61,12 @@ export function ShareStatus() {
       <div className="flex-1 p-6 flex flex-col gap-8">
         <div className="bg-slate-700 rounded-[32px] p-6 border border-slate-600 shadow-sm">
           <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-600">
-            <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30">
-              <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+            <div className="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/30">
+              <Share2 className="w-7 h-7 text-blue-300" />
             </div>
             <div>
-              <h2 className="text-slate-50 font-bold text-xl mb-1">안심귀가 중입니다</h2>
-              <p className="text-slate-300 text-sm font-medium">실시간 위치를 공유합니다</p>
+              <h2 className="text-slate-50 font-bold text-xl mb-1">보호자에게 공유</h2>
+              <p className="text-slate-300 text-sm font-medium">공유하면 보호자가 내 위치 링크와 목적지를 확인할 수 있어요</p>
             </div>
           </div>
 
@@ -76,12 +76,15 @@ export function ShareStatus() {
               <span className="text-slate-50 font-bold">{destName}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-300 font-medium">예상 도착</span>
-              <span className="text-blue-300 font-bold">오후 11:30 (24분 남음)</span>
+              <span className="text-slate-300 font-medium">공유 내용</span>
+              <span className="text-slate-300 font-medium flex items-center gap-1.5 text-sm">
+                <MapPin className="w-4 h-4 text-blue-300" />
+                위치 링크 + 목적지
+              </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-300 font-medium">상태</span>
-              <span className="text-emerald-300 font-bold bg-emerald-500/20 px-3 py-1.5 rounded-full text-sm">이동 중</span>
+              <span className="text-slate-300 font-medium">공유 상태</span>
+              <span className="text-slate-200 font-bold bg-slate-600 px-3 py-1.5 rounded-full text-sm">아직 공유 전</span>
             </div>
           </div>
         </div>
