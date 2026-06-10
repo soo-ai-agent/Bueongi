@@ -33,4 +33,16 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  // 격리 포트 고정(3619). strictPort로 점유 시 임의 폴백 방지, host로 LAN/컨테이너 노출 허용.
+  server: {
+    port: 3619,
+    strictPort: true,
+    host: true,
+  },
+  preview: {
+    port: 3619,
+    strictPort: true,
+    host: true,
+  },
 })

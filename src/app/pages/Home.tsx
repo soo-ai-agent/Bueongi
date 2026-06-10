@@ -43,7 +43,8 @@ export function Home() {
     if (place.isSet && place.address) {
       goToRoutes({ name: place.label, address: place.address });
     } else {
-      navigate('/place-search');
+      // 미설정 장소: 등록 모드로 장소 검색 진입
+      navigate('/place-search', { state: { saveAs: place.key } });
     }
   };
 

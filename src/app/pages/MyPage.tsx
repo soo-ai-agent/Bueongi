@@ -1,15 +1,15 @@
 import { ArrowLeft, Home, GraduationCap, Briefcase, Phone, Bell, ChevronRight, ShieldAlert, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useApp } from '../store/appStore';
+import { useApp, type SavedPlaceKey } from '../store/appStore';
 
 export function MyPage() {
   const navigate = useNavigate();
   const { savedPlaces, primaryContact } = useApp();
 
-  const places = [
-    { icon: <Home className="w-5 h-5" />, label: '집', value: savedPlaces.home.address, isSet: savedPlaces.home.address != null },
-    { icon: <GraduationCap className="w-5 h-5" />, label: '학교', value: savedPlaces.school.address, isSet: savedPlaces.school.address != null },
-    { icon: <Briefcase className="w-5 h-5" />, label: '회사', value: savedPlaces.work.address, isSet: savedPlaces.work.address != null },
+  const places: { key: SavedPlaceKey; icon: React.ReactNode; label: string; value: string | null; isSet: boolean }[] = [
+    { key: 'home', icon: <Home className="w-5 h-5" />, label: '집', value: savedPlaces.home.address, isSet: savedPlaces.home.address != null },
+    { key: 'school', icon: <GraduationCap className="w-5 h-5" />, label: '학교', value: savedPlaces.school.address, isSet: savedPlaces.school.address != null },
+    { key: 'work', icon: <Briefcase className="w-5 h-5" />, label: '회사', value: savedPlaces.work.address, isSet: savedPlaces.work.address != null },
   ];
 
   return (
@@ -41,7 +41,7 @@ export function MyPage() {
             {places.map((item, i) => (
               <div
                 key={i}
-                onClick={() => navigate('/place-search')}
+                onClick={() => navigate('/place-search', { state: { saveAs: item.key } })}
                 className="flex items-center gap-4 p-5 hover:bg-slate-600 transition-colors cursor-pointer group"
               >
                 <div className="p-2.5 bg-slate-800 rounded-full text-slate-300 border border-slate-600">{item.icon}</div>
