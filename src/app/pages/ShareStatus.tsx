@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle2, Copy, Send } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useApp } from '../store/appStore';
+import { isUserCancelledShare } from '../utils/share';
 
 export function ShareStatus() {
   const navigate = useNavigate();
@@ -19,8 +20,13 @@ export function ShareStatus() {
       try {
         await navigator.share({ title: '부엉이 안심귀가', text: shareMessage, url: shareUrl });
         return;
-      } catch {
-        return; // 사용자가 공유 취소
+      } catch (err) {
+        // 사용자 취소(AbortError)는 정상 → 조용히 종료.
+        if (isUserCancelledShare(err)) return;
+        // 실제 오류(권한/데이터/네트워크 등)는 보호자 미전달이므로 클립보드로 폴백해
+        // 거짓 "공유됨" 착각을 막고 공유 경로를 보장한다. raw 에러는 노출하지 않는다.
+        await copyToClipboard('공유에 실패해 메시지를 복사했어요. 카카오톡에 붙여넣어 보내세요.');
+        return;
       }
     }
     await copyToClipboard('공유 메시지를 복사했어요. 카카오톡에 붙여넣어 보내세요.');
