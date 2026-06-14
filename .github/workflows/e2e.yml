@@ -6,8 +6,10 @@ name: E2E (Playwright)
 
 on:
   push:
-    # 작업 브랜치는 PR 열릴 때만 → private Actions 한도 절약.
-    branches: [main, 'e2e/**', 'test/**', 'ci/**']
+    # feat/** 추가(2026-06-13) — 자율 worker가 feat/<task-id>로 push하면 ★그 즉시 CI 발동해야
+    # ④(CI=done 게이트)가 ref로 CI 결과를 조회할 수 있다. canary BUE-CANARY-1이 feat push에
+    # CI 안 붙는 갭(#4)을 잡아냄 → feat/** 트리거 추가로 해소. main 직접 push는 protection으로 차단.
+    branches: [main, 'feat/**', 'e2e/**', 'test/**', 'ci/**']
   pull_request:
     branches: [main]
 
